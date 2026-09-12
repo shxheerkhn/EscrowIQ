@@ -1,373 +1,1171 @@
-# EscrowIQ
+EscrowIQ
 
-EscrowIQ is a freelance marketplace prototype built around an escrow-first workflow: clients post jobs, freelancers send proposals, one proposal is accepted, funds are locked in escrow, work is submitted for review, and payment is either released, revised, disputed, or refunded.
+EscrowIQ is a freelance marketplace prototype built around escrow-based transactions, AI-assisted marketplace analysis, and an Agentic AI Hiring Assistant.
 
-The project combines a Flask backend, PostgreSQL persistence, server-rendered Jinja templates, session auth, SMTP email notifications, and lightweight AI-style features for fraud analysis, ranking, and proposal drafting.
+The platform connects clients and freelancers through a controlled marketplace workflow:
 
-## Highlights
+Client posts a job
+        ↓
+Freelancers submit proposals
+        ↓
+Client reviews proposals
+        ↓
+Client accepts a proposal
+        ↓
+Escrow is funded
+        ↓
+Freelancer submits work
+        ↓
+Client reviews the submission
+        ↓
+Approve / Request Changes / Complaint
+        ↓
+Release / Refund / Dispute Resolution
 
-- Client and freelancer accounts with email verification
-- Session-based authentication with CSRF protection
-- Job posting with fraud scoring and validation
-- Proposal lifecycle with accept/reject flows
-- Escrow funding tied to the accepted freelancer and accepted bid amount
-- Work submission with delivery note, link, zip upload, or folder upload
-- Change requests, complaints, and admin complaint resolution
-- In-app notifications plus branded email notifications
-- AI-style fraud analysis, matching, and proposal generation
-- Cookie consent banner for a more realistic frontend experience
+EscrowIQ combines a Flask backend, PostgreSQL persistence, server-rendered Jinja2 templates, vanilla JavaScript, session authentication, CSRF protection, SMTP notifications, deterministic/hybrid marketplace analysis, a Groq chatbot, and a bounded Groq-based Agentic AI Hiring Assistant.
 
-## Tech Stack
+Project status: Working academic/prototype application. It is not presented as a production payment platform or production-grade legal/privacy infrastructure.
 
-- Backend: Flask, SQLAlchemy Core, psycopg2
-- Database: PostgreSQL
-- Frontend: Jinja2 templates, vanilla JavaScript, custom CSS
-- ML / scoring: scikit-learn TF-IDF similarity plus rule-based logic
-- Email: SMTP
-- Password hashing: Werkzeug security helpers
-- Testing: Python `unittest`
+Table of Contents
 
-## Repository Layout
+Overview
 
-```text
+Key Features
+
+Marketplace Workflow
+
+Agentic AI Hiring Assistant
+
+AI and Intelligent Features
+
+Technology Stack
+
+Architecture
+
+Repository Structure
+
+Local Setup
+
+Environment Configuration
+
+Running the Application
+
+Demo and Seed Data
+
+Testing
+
+Security Controls
+
+Important Routes
+
+Database and Persistence
+
+Deployment
+
+Current Limitations
+
+Project Documentation
+
+License and Project Status
+
+Overview
+
+EscrowIQ models the core lifecycle of a freelance marketplace while keeping important transaction state behind server-side validation and database transactions.
+
+A client can create a job containing:
+
+Job title
+
+Description
+
+Required skills
+
+Budget
+
+Deadline
+
+Freelancers can discover suitable opportunities and submit proposals containing:
+
+Bid amount
+
+Timeline
+
+Cover letter
+
+After a proposal is accepted, the accepted bid becomes the basis for escrow funding. The freelancer can then submit work, after which the client can approve the delivery, request changes, or open a complaint.
+
+The platform also includes AI-assisted marketplace capabilities:
+
+Hybrid freelancer matching
+
+Fraud analysis
+
+Proposal generation
+
+General Groq chatbot
+
+Agentic AI Hiring Assistant
+
+The Hiring Assistant is intentionally different from the general chatbot. It can inspect marketplace information through a small allowlisted tool set, use deterministic backend analysis, compare available candidates, produce a recommendation, and prepare a proposal-acceptance recommendation that requires explicit client approval.
+
+Key Features
+
+Marketplace
+
+Client and freelancer accounts
+
+Email verification
+
+Login and logout
+
+Password reset
+
+Profile editing
+
+Client job posting with validation
+
+Required skills and deadlines
+
+Freelancer proposals
+
+Proposal acceptance/rejection
+
+Competing pending-proposal rejection
+
+Escrow funding, release, and refund
+
+Work submission through notes, links, ZIP uploads, or folder uploads
+
+Revision/change requests
+
+Complaints and admin resolution
+
+Accepted-project messaging
+
+In-app notifications
+
+SMTP email notifications
+
+AI / Intelligent Features
+
+Agentic AI Hiring Assistant
+
+Groq-powered general chatbot
+
+TF-IDF and hybrid freelancer matching
+
+Skill synonyms and semantic similarity
+
+Rating and review signals
+
+Rule-based fraud analysis
+
+TF-IDF-assisted fraud analysis
+
+Template-based proposal generation
+
+Security and Reliability
+
+Session-based authentication
+
+Role-based access checks
+
+CSRF protection for mutating API requests
+
+Password hashing using Werkzeug
+
+Server-side ownership validation
+
+Server-side state validation
+
+Transactional marketplace operations
+
+Validated Agent tool arguments
+
+Allowlisted Agent tools
+
+Explicit human approval for the Agent's consequential action
+
+Persistent Agent run and audit records
+
+Marketplace Workflow
+
+Client
+
+Register and verify the account.
+
+Sign in.
+
+Create a job with title, description, skills, budget, and deadline.
+
+Review incoming proposals.
+
+Accept one proposal.
+
+Fund escrow.
+
+Review submitted work.
+
+Approve the work, request changes, or open a complaint.
+
+Freelancer
+
+Register and verify the account.
+
+Complete the freelancer profile.
+
+Browse jobs or matched opportunities.
+
+Submit a proposal with bid, timeline, and cover letter.
+
+Wait for acceptance and escrow funding.
+
+Submit completed work.
+
+Respond to requested changes where applicable.
+
+Admin
+
+Access the complaint queue.
+
+Inspect disputed marketplace activity.
+
+Resolve complaints using the supported release, refund, or close outcomes.
+
+The backend updates the relevant marketplace state using server-side validation and transaction handling.
+
+Agentic AI Hiring Assistant
+
+The EscrowIQ Hiring Assistant is an agent/orchestrator for client hiring analysis, not merely a conversational chatbot.
+
+A client can provide an objective such as:
+
+Find the strongest freelancer for my Python machine-learning job, evaluate compatibility and relevant risk, compare the strongest candidates, and recommend the best option.
+
+The Agent then works through controlled backend tools.
+
+Agent Architecture
+
+flowchart TD
+    A[Client objective] --> B[Agent Controller]
+    B --> C[Groq structured decision]
+    C --> D[Allowlisted tool]
+    D --> E[Deterministic backend service]
+    E --> F[Structured tool result]
+    F --> B
+    B --> G[Recommendation]
+    G --> H[Explicit client approval]
+    H --> I[Server-side revalidation]
+    I --> J[Normal proposal acceptance path]
+
+The architecture deliberately separates model reasoning from application authority:
+
+User objective
+      ↓
+Agent Controller
+      ↓
+Groq structured decision
+      ↓
+Validated tool
+      ↓
+Existing deterministic backend service
+      ↓
+Structured result
+      ↓
+Agent continues or recommends
+      ↓
+Human approval
+      ↓
+Server-side revalidation
+      ↓
+Existing marketplace transaction path
+
+The LLM plans and orchestrates.
+
+The backend remains the source of truth for:
+
+Marketplace data
+
+Matching
+
+Ranking
+
+Fraud analysis
+
+Authorization
+
+Job ownership
+
+Proposal state
+
+Current marketplace state
+
+State-changing operations
+
+Structured Agent Loop
+
+The controller runs a bounded loop of structured Groq completions:
+
+Receive the client objective.
+
+Ask Groq for a structured decision.
+
+Validate the requested tool/action.
+
+Execute the allowlisted backend tool.
+
+Record the execution.
+
+Return the actual backend result as structured tool_result context.
+
+Ask Groq for the next structured decision.
+
+Continue until a final recommendation or bounded failure.
+
+The model's decisions are preserved as assistant turns, while backend results are returned as structured tool-result context before the next decision.
+
+The controller accepts a final response only when it is valid JSON with a non-empty summary and, when present, a valid pending-proposal recommendation.
+
+Waiting/planning prose is not treated as a successful final Agent response.
+
+Hidden chain-of-thought is not exposed in the user interface.
+
+Provider and Model
+
+The Agent uses the Groq Python SDK through GroqAgentProvider.
+
+Current intended configuration:
+
+GROQ_MODEL=openai/gpt-oss-120b
+
+The Agent requires:
+
+GROQ_API_KEY=your-groq-api-key
+GROQ_MODEL=openai/gpt-oss-120b
+
+There is no automatic Agent provider/model fallback.
+
+The general chatbot also uses the configured GROQ_MODEL when available and otherwise follows its existing default behavior.
+
+Allowlisted Tools
+
+The current Agent registry exposes only validated, read-only marketplace tools:
+
+Tool
+
+Purpose
+
+list_client_jobs
+
+Lists the authenticated client's open jobs.
+
+get_job_candidates
+
+Retrieves suitable verified freelancers for an owned open job using the deterministic hybrid matcher.
+
+get_pending_proposals
+
+Lists pending proposals for an owned open job.
+
+The Agent cannot use:
+
+Arbitrary SQL
+
+Arbitrary Python
+
+Shell commands
+
+Unrestricted filesystem access
+
+Unrestricted HTTP requests
+
+Unapproved tools
+
+Tool arguments are validated before execution, and the backend performs relevant ownership and job-state checks.
+
+Human Approval
+
+The Agent may recommend acceptance of an existing pending proposal, but it cannot autonomously accept it.
+
+The consequential flow is:
+
+Agent analysis
+      ↓
+Recommendation
+      ↓
+Pending approval
+      ↓
+Explicit client approval
+      ↓
+Server-side revalidation
+      ↓
+Normal proposal acceptance path
+
+Before acceptance, the server revalidates client ownership, proposal status, and current marketplace state.
+
+The Agent does not autonomously:
+
+Fund escrow
+
+Release escrow
+
+Refund escrow
+
+Resolve complaints
+
+Perform arbitrary marketplace mutations
+
+Agent Persistence and Audit
+
+Agent execution is persisted in PostgreSQL through:
+
+agent_runs
+
+agent_audit_events
+
+Run records contain information such as:
+
+Client
+
+Prompt/objective
+
+Summary
+
+Proposed action
+
+Status
+
+Timestamps
+
+Errors
+
+Audit events capture important lifecycle events such as:
+
+Run start
+
+Tool use/rejection
+
+Approval request
+
+Completion/failure
+
+Cancellation
+
+Stale approval
+
+Completed approval
+
+Current run statuses include:
+
+running
+completed
+pending_approval
+failed
+approving
+approved
+stale
+cancelled
+
+The Agent loop is bounded by:
+
+AGENT_MAX_STEPS=4
+AGENT_GROQ_TIMEOUT_SECONDS=20
+
+The application caps the maximum Agent step count.
+
+AI and Intelligent Features
+
+Freelancer Matching
+
+The matching service uses deterministic/hybrid analysis rather than allowing the LLM to invent candidate rankings.
+
+Signals include:
+
+Required skills
+
+Freelancer skills
+
+Skill synonyms
+
+TF-IDF semantic similarity
+
+Cosine similarity
+
+Ratings
+
+Review counts
+
+This allows the Agent to orchestrate existing marketplace intelligence while keeping ranking logic inside the backend.
+
+Fraud Analysis
+
+Fraud analysis combines:
+
+Rule-based checks
+
+TF-IDF-assisted analysis
+
+The application produces risk-oriented analysis for relevant marketplace activity.
+
+Proposal Generation
+
+The application includes template-based proposal generation using job context such as:
+
+Job title
+
+Description
+
+Required skills
+
+General Chatbot
+
+The general chatbot is available through:
+
+POST /api/chatbot
+
+It is intended for conversational assistance around the marketplace.
+
+Chatbot vs Hiring Agent
+
+Component
+
+Purpose
+
+General Chatbot
+
+Conversational marketplace help
+
+Hiring Assistant
+
+Agentic hiring analysis using controlled tools and explicit approval
+
+The Hiring Assistant is therefore a separate agentic workflow rather than simply a renamed chatbot.
+
+Technology Stack
+
+Area
+
+Technology
+
+Language
+
+Python
+
+Backend
+
+Flask
+
+Database
+
+PostgreSQL
+
+Database access
+
+SQLAlchemy Core, psycopg2-binary
+
+Frontend
+
+Jinja2, vanilla JavaScript, custom CSS
+
+Matching
+
+scikit-learn TF-IDF, cosine similarity, deterministic rules
+
+LLM
+
+Groq Python SDK
+
+Email
+
+Python SMTP
+
+Password security
+
+Werkzeug security helpers
+
+Testing
+
+Python unittest
+
+Local server
+
+Flask development server
+
+Deployment server
+
+Gunicorn
+
+Deployment configuration
+
+Railway/Nixpacks
+
+Architecture
+
+At a high level:
+
+┌───────────────────────────────────────────────┐
+│                  Frontend                     │
+│ Jinja2 + Vanilla JavaScript + CSS            │
+└───────────────────────┬───────────────────────┘
+                        ↓
+┌───────────────────────────────────────────────┐
+│                Flask Backend                  │
+│ Routes + Auth + Validation + Marketplace     │
+│ Logic + APIs + Notifications                 │
+└───────────────┬───────────────────┬───────────┘
+                ↓                   ↓
+┌────────────────────────┐  ┌───────────────────┐
+│ PostgreSQL             │  │ AI Services       │
+│ Users / Jobs / Bids    │  │ Matching          │
+│ Escrow / Submissions   │  │ Fraud Analysis    │
+│ Agent Runs / Audit     │  │ Proposal Drafting │
+└────────────────────────┘  │ Groq Chatbot      │
+                            │ Groq Agent        │
+                            └───────────────────┘
+
+The important design principle is:
+
+The LLM orchestrates; the backend decides what is actually allowed.
+
+Repository Structure
+
 Project/
-├─ Backend/
-│  ├─ app.py                  # Main Flask app, routes, schema creation, emails, escrow logic
-│  ├─ run.py                  # Local startup + demo data seeding
-│  ├─ seed_ai_test_data.py    # Optional AI-specific seed script
-│  ├─ fraud_detection.py      # Fraud scoring logic
-│  ├─ ml_matching.py          # TF-IDF semantic matching helpers
-│  ├─ requirements.txt        # Backend dependency list
-│  ├─ .env                    # Local environment variables
-│  └─ uploads/                # Submitted work archives
-├─ Frontend/
-│  ├─ templates/              # Jinja templates
-│  └─ static/                 # Static assets, images, logo
-├─ tests/
-│  └─ test_core_flows.py      # Integration-style workflow tests
-├─ requirements.txt           # Root dependency list
-├─ AI_TEST_CASES.md
-├─ PROPOSAL_ALIGNMENT_REVIEW.md
-├─ VERCEL_DEPLOYMENT.md
-└─ vercel.json
-```
+├── Backend/
+│   ├── app.py
+│   ├── run.py
+│   ├── seed_ai_test_data.py
+│   ├── fraud_detection.py
+│   ├── ml_matching.py
+│   ├── requirements.txt
+│   └── agentic/
+│       ├── controller.py
+│       ├── provider.py
+│       ├── registry.py
+│       └── __init__.py
+│
+├── Frontend/
+│   ├── templates/
+│   │   └── agent_workspace.html
+│   ├── script/
+│   │   └── nothing.js
+│   └── static/
+│
+├── tests/
+│   ├── test_agent_controller.py
+│   ├── test_agent_provider.py
+│   └── test_core_flows.py
+│
+├── requirements.txt
+├── Procfile
+├── railway.toml
+├── AGENTS.md
+├── AI_TEST_CASES.md
+└── CODEX_HANDOFF.md
 
-## Core User Flows
+Runtime/local files such as Backend/.env, uploaded submissions, caches, virtual environments, and generated files are intentionally omitted.
 
-### Client Flow
+Do not commit Backend/.env to GitHub.
 
-1. Register and verify email
-2. Post a job with title, description, skills, budget, and deadline
-3. Review incoming proposals
-4. Accept one proposal
-5. Fund escrow for the accepted freelancer
-6. Review submitted work
-7. Approve work, request changes, or file a complaint
+Local Setup
 
-### Freelancer Flow
+Prerequisites
 
-1. Register with at least one skill and a stronger password
-2. Verify email and complete profile
-3. Browse jobs or matched opportunities
-4. Submit a proposal with bid, timeline, and cover letter
-5. Wait for acceptance and escrow funding
-6. Submit work using note, link, zip, or folder upload
-7. Respond to changes requested or complaint outcomes
+Python 3.10+
 
-### Admin Flow
+PostgreSQL
 
-1. Sign in using `ADMIN_EMAIL` and `ADMIN_PASSWORD`
-2. Review complaint queue
-3. Resolve with one of:
-   - `release`
-   - `refund`
-   - `close`
-4. System updates escrow, job, and submission state atomically
+Git
 
-## Feature Breakdown
+Groq API key for live AI functionality
 
-### Authentication and Account Security
+SMTP credentials if email delivery is required
 
-- Email verification by 6-digit code
-- Password reset by 6-digit code
-- Session-backed login
-- CSRF enforcement for mutating API routes
-- Registration validation:
-  - freelancer skills required
-  - stronger passwords required
-- Profile editing for name, bio, and freelancer skills
+1. Create a Virtual Environment
 
-### Job Posting
+From the repository root:
 
-- Clients only
-- Required fields:
-  - title
-  - description
-  - required skills
-  - budget
-  - deadline
-- Validation includes:
-  - minimum title length
-  - more realistic description length / word count
-  - at least 2 required skills
-  - valid future deadline
+python -m venv .venv
+.venv\Scripts\Activate.ps1
 
-### Proposal Lifecycle
+2. Install Dependencies
 
-- Freelancers only
-- One proposal per freelancer per job
-- Clients can accept one proposal
-- Other pending proposals are auto-rejected when one is accepted
-- Proposal events create in-app notifications and branded emails
+python -m pip install -r requirements.txt
 
-### Escrow
+Or from the backend context:
 
-- Only clients can fund escrow
-- Only for the accepted freelancer
-- Escrow amount must match the accepted bid amount
-- Balance is deducted atomically when escrow is created
-- Release / refund actions update balances and statuses atomically
+python -m pip install -r Backend/requirements.txt
 
-### Work Submission
+3. Create the PostgreSQL Database
 
-- Freelancer must be the accepted freelancer
-- Escrow must already be funded
-- Supported submission content:
-  - delivery note
-  - external work link
-  - zip file
-  - folder upload packaged server-side into a zip
-- Validation includes:
-  - no empty submissions
-  - `http://` or `https://` link format
-  - zip / folder mutual exclusivity
+Create a PostgreSQL database for EscrowIQ and configure DATABASE_URL.
 
-### Review, Revisions, and Complaints
+Example:
 
-- Clients can:
-  - approve work
-  - request changes
-  - file a complaint
-- Change requests require detailed feedback
-- Complaints move the job into a disputed state
-- Admin can resolve complaints and notify both parties
+DATABASE_URL=postgresql+psycopg2://username:password@localhost:5432/escrowiq
 
-### Notifications and Email
+The application uses additive schema initialization in init_db() and does not currently use Alembic migrations.
 
-- In-app notification dropdown
-- Email notifications for:
-  - verification
-  - password reset
-  - proposals
-  - escrow funding
-  - work submitted
-  - changes requested
-  - complaint opened
-  - complaint resolved
-  - payment released
-- Branded HTML email layout with embedded logo support
+Environment Configuration
 
-### AI / Ranking Features
+Create:
 
-#### Fraud Detection
+Backend/.env
 
-- Rule-based and TF-IDF-style hybrid scoring
-- Risk labels:
-  - Low
-  - Medium
-  - High
-- Stores fraud reasons and score per job
+Use placeholders locally and never commit real credentials.
 
-#### Matching
+Example:
 
-- Semantic similarity using TF-IDF
-- Skill overlap and synonym expansion
-- Rating and review count signal blending
+SECRET_KEY=your-secret-key
 
-#### Proposal Generation
+DATABASE_URL=postgresql+psycopg2://username:password@localhost:5432/escrowiq
 
-- Template-based proposal drafts
-- Uses job title, description, and skill context
-
-## Local Setup
-
-### Prerequisites
-
-- Python 3.10+
-- PostgreSQL
-- SMTP credentials for email delivery
-
-### Install Dependencies
-
-From the project root:
-
-```powershell
-pip install -r requirements.txt
-```
-
-If you prefer the backend-specific list:
-
-```powershell
-pip install -r Backend/requirements.txt
-```
-
-## Environment Variables
-
-This project currently reads local environment variables from `Backend/.env`.
-
-Typical keys used by the app:
-
-```env
-SECRET_KEY=change-me
-DATABASE_URL=postgresql://username:password@localhost:5432/escrowiq
-
-SMTP_HOST=smtp.gmail.com
+SMTP_HOST=smtp.example.com
 SMTP_PORT=587
-SMTP_USERNAME=your-email@example.com
-SMTP_PASSWORD=your-app-password
-SMTP_FROM_EMAIL=your-email@example.com
+SMTP_USERNAME=your-smtp-username
+SMTP_PASSWORD=your-smtp-password
+SMTP_FROM_EMAIL=no-reply@example.com
 SMTP_USE_TLS=true
 
 ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=change-me
-FOUNDER_ALERT_EMAILS=founder@example.com
+ADMIN_PASSWORD=your-admin-password
+
+FOUNDER_ALERT_EMAILS=alerts@example.com
 
 SESSION_COOKIE_SECURE=false
+
 AI_MODE=hybrid
 AI_FALLBACK_ENABLED=true
-```
 
-## Running the App
+GROQ_API_KEY=your-groq-api-key
+GROQ_MODEL=openai/gpt-oss-120b
 
-The intended local entry point is:
+AGENT_MAX_STEPS=4
+AGENT_GROQ_TIMEOUT_SECONDS=20
 
-```powershell
+Configuration Notes
+
+Variable
+
+Purpose
+
+SECRET_KEY
+
+Flask/session security
+
+DATABASE_URL
+
+PostgreSQL connection
+
+SMTP_*
+
+Email notifications
+
+ADMIN_*
+
+Local/admin configuration
+
+GROQ_API_KEY
+
+Groq API authentication
+
+GROQ_MODEL
+
+Configured Groq model
+
+AGENT_MAX_STEPS
+
+Agent loop bound
+
+AGENT_GROQ_TIMEOUT_SECONDS
+
+Agent Groq request timeout
+
+AI_MODE
+
+AI/fraud-analysis behavior
+
+AI_FALLBACK_ENABLED
+
+Existing AI/fraud-analysis behavior
+
+AI_MODE and AI_FALLBACK_ENABLED are not Agent provider-switch settings.
+
+Running the Application
+
+Start the application from the repository root:
+
 python Backend/run.py
-```
 
-What `Backend/run.py` does:
+The startup process:
 
-- loads `Backend/.env`
-- initializes the schema if needed
-- seeds demo users and jobs
-- starts the Flask app
+Loads configuration
 
-Default local URL:
+Initializes the database schema
 
-```text
+Seeds demo data
+
+Starts Flask
+
+The local application is normally available at:
+
 http://localhost:5000
-```
 
-## Demo / Seed Data
+Health check:
 
-`Backend/run.py` seeds sample clients, freelancers, and jobs for a richer local demo.
+GET /health
 
-There is also an optional AI-focused seed script:
+Hiring Assistant:
 
-```powershell
+/agent
+
+General chatbot API:
+
+POST /api/chatbot
+
+Demo and Seed Data
+
+The normal startup process includes demo-data seeding.
+
+Optional AI-focused seed data:
+
 python Backend/seed_ai_test_data.py
-```
 
-That script creates:
+The AI test seed includes a demo client:
 
-- `ai_test_client@escrowiq.local`
-- several freelancer profiles with matching-friendly skills
-- jobs tailored to fraud scoring and recommendation scenarios
+ai_test_client@escrowiq.local
 
-Default seeded password used there:
+with the seed password:
 
-```text
 demo123
-```
 
-## Running Tests
+Use seeded credentials only for local testing.
 
-```powershell
+Testing
+
+EscrowIQ uses Python's built-in unittest framework.
+
+For core marketplace integration tests:
+
 python -m unittest tests.test_core_flows
-```
 
-Notes:
+For Agent tests:
 
-- tests are integration-style and expect PostgreSQL
-- if `DATABASE_URL` is missing or not PostgreSQL, tests are skipped
-- some test behavior depends on app config such as `TESTING=True`
+python -m unittest tests.test_agent_controller tests.test_agent_provider
 
-## Important Files
+The Agent tests cover areas including:
 
-### Backend
+Structured Agent tool loop
 
-- [Backend/app.py](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/Backend/app.py>)
-  Main application logic, routes, schema management, validation, escrow, emails, notifications.
+Preservation of tool results
 
-- [Backend/run.py](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/Backend/run.py>)
-  Local startup script and demo data seeding.
+Invalid waiting/planning responses
 
-- [Backend/seed_ai_test_data.py](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/Backend/seed_ai_test_data.py>)
-  Optional AI testing dataset.
+Groq provider validation
 
-- [Backend/fraud_detection.py](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/Backend/fraud_detection.py>)
-  Fraud analysis implementation.
+Approval handling
 
-- [Backend/ml_matching.py](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/Backend/ml_matching.py>)
-  TF-IDF semantic matching logic.
+Cancellation
 
-### Frontend
+Stale-action handling
 
-- [Frontend/templates/base.html](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/Frontend/templates/base.html>)
-  Shared layout, navbar, notifications, toast system, cookie consent banner.
+Single-use approval
 
-- [Frontend/templates/dashboard_client.html](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/Frontend/templates/dashboard_client.html>)
-  Client dashboard and job creation UI.
+Client ownership protections
 
-- [Frontend/templates/job_detail.html](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/Frontend/templates/job_detail.html>)
-  Proposal review, escrow actions, work submission, complaint flow.
+Core integration tests require PostgreSQL and can skip when an appropriate test DATABASE_URL is unavailable.
 
-## Deployment Notes
+Security Controls
 
-This repository includes:
+EscrowIQ applies security controls at both the marketplace and Agent levels.
 
-- [vercel.json](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/vercel.json>)
-- [VERCEL_DEPLOYMENT.md](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/VERCEL_DEPLOYMENT.md>)
+Authentication
 
-Before deployment:
+Session authentication
 
-- set all required environment variables
-- ensure PostgreSQL is reachable from the host
-- confirm SMTP credentials are valid in production
-- set `SESSION_COOKIE_SECURE=true` behind HTTPS
-- use a strong `SECRET_KEY`
+Role checks
 
-## Current Realism / UX Notes
+Email verification
 
-- The new cookie banner is a frontend realism feature and stores consent in `localStorage`
-- Essential cookies are still used by the app for sessions and CSRF regardless of optional preference consent
-- The project is still a prototype, not a production-hardened legal/privacy implementation
+Password hashing with Werkzeug
 
-## Known Limitations
+Password reset workflow
 
-- No full migrations system such as Alembic
-- Cookie consent is UI-only, not a full compliance framework
-- SMTP and admin auth are environment-driven and fairly simple
-- The app uses server-rendered templates rather than a component frontend
-- Some docs in the repository are legacy notes and overlap with this README
+Request Protection
 
-## Related Project Notes
+CSRF enforcement for mutating /api/* requests
 
-- [AI_TEST_CASES.md](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/AI_TEST_CASES.md>)
-- [PROPOSAL_ALIGNMENT_REVIEW.md](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/PROPOSAL_ALIGNMENT_REVIEW.md>)
-- [VERCEL_DEPLOYMENT.md](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/VERCEL_DEPLOYMENT.md>)
-- [# EscrowIQ — Developer README.txt](</d:/FAST 6th Semester/Web Programming/Semester Project/Project Files/Web-Programming-main/Web-Programming-main/Project/# EscrowIQ — Developer README.txt>)
+Server-side validation
 
-## Quick Start Summary
+Server-side ownership checks
 
-```powershell
-pip install -r requirements.txt
-python Backend/run.py
-```
+Marketplace State Protection
 
-Then open:
+Important marketplace operations validate:
 
-```text
-http://localhost:5000
-```
+User role
 
+Resource ownership
+
+Job state
+
+Proposal state
+
+Escrow state
+
+Transactional database handling is used for the supported state-changing workflows.
+
+Agent Security
+
+The Agent is constrained by:
+
+Allowlisted tools
+
+Argument validation
+
+Ownership checks
+
+State checks
+
+Bounded execution
+
+Structured output validation
+
+No arbitrary SQL
+
+No arbitrary Python execution
+
+No shell execution
+
+No unrestricted tool execution
+
+Explicit human approval for the consequential Agent action
+
+The LLM is never treated as the authority for persistent marketplace state.
+
+Important Routes
+
+Page Routes
+
+Key routes include:
+
+/
+ /register
+ /login
+ /verify-email
+ /forgot-password
+ /dashboard
+ /jobs
+ /jobs/<job_id>
+ /profile
+ /escrow
+ /admin/complaints
+ /agent
+ /health
+
+Agent API
+
+POST /api/agent/runs
+GET  /api/agent/runs/<run_id>
+POST /api/agent/runs/<run_id>/cancel
+POST /api/agent/runs/<run_id>/approve
+
+General AI API
+
+POST /api/chatbot
+
+Additional APIs support authentication, jobs, proposals, escrow, submissions, complaints, profiles, notifications, messaging, matching, fraud analysis, and proposal generation.
+
+Frontend/templates/ai_features.html is a legacy unrouted template and is not part of the active AI workflow.
+
+Database and Persistence
+
+PostgreSQL is the primary persistence layer.
+
+Database access uses SQLAlchemy Core and psycopg2-binary.
+
+Marketplace data includes:
+
+Users
+
+Profiles
+
+Jobs
+
+Proposals
+
+Escrow records
+
+Work submissions
+
+Complaints
+
+Notifications
+
+Related marketplace state
+
+Agent-specific persistence includes:
+
+agent_runs
+agent_audit_events
+
+The application currently initializes/updates its schema through application initialization logic rather than a versioned migration framework such as Alembic.
+
+Deployment
+
+The repository contains Railway/Nixpacks deployment configuration.
+
+The production-style server command is:
+
+gunicorn --bind 0.0.0.0:${PORT:-5000} Backend.app:app
+
+Deployment configuration is provided through:
+
+Procfile
+railway.toml
+
+For deployment:
+
+Configure all required environment variables.
+
+Provide a reachable PostgreSQL database.
+
+Configure SMTP if email is required.
+
+Configure GROQ_API_KEY for live AI.
+
+Use HTTPS.
+
+Set:
+
+SESSION_COOKIE_SECURE=true
+
+when running behind HTTPS.
+7. Use a strong production SECRET_KEY.
+
+Uploaded submissions currently use:
+
+Backend/uploads/submissions
+
+Local disk should not be assumed to provide durable production storage.
+
+The repository does not contain a verified Vercel configuration.
+
+Current Limitations
+
+EscrowIQ is a prototype, so several production concerns remain outside its current scope.
+
+Database migrations
+
+There is no full Alembic-style migration system.
+
+Payment infrastructure
+
+The escrow workflow models marketplace escrow state but should not be interpreted as integration with a regulated real-world payment processor.
+
+File storage
+
+Uploads currently use local storage. A production deployment would require durable object/file storage.
+
+AI dependency
+
+Live chatbot and Agent responses require the configured Groq service.
+
+Agent scope
+
+The Hiring Assistant is intentionally bounded to hiring analysis and recommendation. It does not autonomously operate the complete marketplace.
+
+Frontend architecture
+
+The application uses Jinja2 and vanilla JavaScript rather than a separate frontend framework.
+
+Production hardening
+
+Additional security, infrastructure, observability, storage, database, privacy, and operational hardening would be required before production use.
+
+Project Documentation
+
+Additional project documentation includes:
+
+AGENTS.md — development/agent guidance
+
+AI_TEST_CASES.md — AI-focused test scenarios
+
+CODEX_HANDOFF.md — project handoff/development notes
+
+These documents complement this README.
+
+Key Implementation Files
+
+File
+
+Responsibility
+
+Backend/app.py
+
+Main Flask application, routes, schema initialization, marketplace APIs and logic
+
+Backend/run.py
+
+Local startup and demo-data seeding
+
+Backend/fraud_detection.py
+
+Fraud-analysis logic
+
+Backend/ml_matching.py
+
+Freelancer matching logic
+
+Backend/agentic/controller.py
+
+Agent orchestration and bounded loop
+
+Backend/agentic/provider.py
+
+Groq Agent provider
+
+Backend/agentic/registry.py
+
+Allowlisted Agent tools and validation
+
+Frontend/templates/agent_workspace.html
+
+Hiring Assistant workspace
+
+tests/test_agent_controller.py
+
+Agent controller tests
+
+tests/test_agent_provider.py
+
+Groq provider tests
+
+tests/test_core_flows.py
+
+Marketplace integration tests
+
+Project Status
+
+EscrowIQ currently combines:
+
+Freelance Marketplace
+        +
+Escrow Workflow
+        +
+AI-Assisted Analysis
+        +
+Groq Chatbot
+        +
+Agentic AI Hiring Assistant
+        +
+Human Approval Controls
+
+The Agentic AI component demonstrates controlled tool use, backend-grounded analysis, bounded orchestration, persistent audit records, and human approval for consequential actions.
+
+The central design principle is:
+
+AI assists the hiring decision; the application backend controls what the system is actually allowed to do.
+
+No license file is currently present in the repository.
+
+EscrowIQ is a working academic/prototype project and should be evaluated against its current implementation and test suite rather than treated as a production payment service.

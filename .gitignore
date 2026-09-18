@@ -31,3 +31,5 @@ instance/
 .DS_Store
 Thumbs.db
 .vscode/
+.neon
+node_modules/

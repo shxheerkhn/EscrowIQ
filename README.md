@@ -78,36 +78,36 @@ EscrowIQ separates presentation, business logic, persistence, deterministic AI a
 
 ```mermaid
 graph TD
-    subgraph Client Layer
-        UI[Jinja2 Templates + Vanilla JS + HTML5/CSS3]
-        Browser[Web Browser / REST Client]
+    subgraph ClientLayer["Client Layer"]
+        UI["Jinja2 Templates + Vanilla JS + HTML5/CSS3"]
+        Browser["Web Browser / REST Client"]
     end
 
-    subgraph Backend Application Layer (Flask)
-        App[Flask Application Core - app.py]
-        Auth[Auth & Session Manager]
-        Marketplace[Marketplace Controller & Escrow Engine]
-        Security[CSRF & Input Validation Middleware]
+    subgraph BackendLayer["Backend Application Layer (Flask)"]
+        App["Flask Application Core - app.py"]
+        Auth["Auth & Session Manager"]
+        Marketplace["Marketplace Controller & Escrow Engine"]
+        Security["CSRF & Input Validation Middleware"]
     end
 
-    subgraph Intelligent Services & Analytics Layer
-        Matcher[Hybrid Matcher - ml_matching.py]
-        Fraud[Fraud Detection Engine - fraud_detection.py]
-        ProposalGen[Template Proposal Generator]
-        Chatbot[Groq Chatbot API]
+    subgraph AnalyticsLayer["Intelligent Services & Analytics Layer"]
+        Matcher["Hybrid Matcher - ml_matching.py"]
+        Fraud["Fraud Detection Engine - fraud_detection.py"]
+        ProposalGen["Template Proposal Generator"]
+        Chatbot["Groq Chatbot API"]
     end
 
-    subgraph Bounded Agentic AI Layer
-        AgentCtrl[Agent Controller - agentic/controller.py]
-        AgentProv[Groq Agent Provider - agentic/provider.py]
-        AgentReg[Allowlisted Tool Registry - agentic/registry.py]
+    subgraph AgenticLayer["Bounded Agentic AI Layer"]
+        AgentCtrl["Agent Controller - agentic/controller.py"]
+        AgentProv["Groq Agent Provider - agentic/provider.py"]
+        AgentReg["Allowlisted Tool Registry - agentic/registry.py"]
     end
 
-    subgraph Storage & External Services Layer
-        DB[(PostgreSQL Database)]
-        GroqAPI[Groq LLM Cloud API]
-        SMTP[SMTP Email Server]
-        Uploads[Local Submission Storage]
+    subgraph StorageLayer["Storage & External Services Layer"]
+        DB[("PostgreSQL Database")]
+        GroqAPI["Groq LLM Cloud API"]
+        SMTP["SMTP Email Server"]
+        Uploads["Local Submission Storage"]
     end
 
     Browser --> UI
@@ -151,7 +151,7 @@ stateDiagram-v2
     [*] --> JobPosted: Client creates job
     JobPosted --> ProposalSubmitted: Freelancer bids
     ProposalSubmitted --> ProposalAccepted: Client accepts proposal
-    ProposalAccepted --> EscrowFunded: Escrow deposited (status: held)
+    ProposalAccepted --> EscrowFunded: Escrow deposited
     EscrowFunded --> WorkSubmitted: Freelancer submits deliverable
     
     state WorkSubmitted {
@@ -161,11 +161,11 @@ stateDiagram-v2
     }
 
     WorkSubmitted --> EscrowReleased: Client approves work
-    WorkSubmitted --> DisputeOpened: Client/Freelancer opens complaint
+    WorkSubmitted --> DisputeOpened: Dispute opened
     
-    DisputeOpened --> EscrowReleased: Admin resolves (Payout Freelancer)
-    DisputeOpened --> EscrowRefunded: Admin resolves (Refund Client)
-    DisputeOpened --> Closed: Admin resolves (No movement)
+    DisputeOpened --> EscrowReleased: Admin payouts freelancer
+    DisputeOpened --> EscrowRefunded: Admin refunds client
+    DisputeOpened --> Closed: Admin closes dispute
 
     EscrowReleased --> [*]: Funds added to Freelancer balance
     EscrowRefunded --> [*]: Funds returned to Client balance
@@ -192,41 +192,41 @@ sequenceDiagram
     actor Client
     participant UI as Agent Workspace UI
     participant Ctrl as Agent Controller
-    participant LLM as Groq LLM (gpt-oss-120b)
+    participant LLM as Groq LLM
     participant Reg as Tool Registry
     participant DB as PostgreSQL DB
     
-    Client->>UI: Input hiring objective (e.g. "Find best Python dev for Job #12")
+    Client->>UI: Input hiring objective
     UI->>Ctrl: POST /api/agent/runs
-    Ctrl->>DB: Create agent_run (status='running')
+    Ctrl->>DB: Create agent_run (status: running)
     
-    loop Bounded Execution Loop (Max 4 Steps)
-        Ctrl->>LLM: Send prompt + valid tool schemas (JSON mode)
-        LLM-->>Ctrl: Structured Decision JSON
+    loop Bounded Loop (Max 4 Steps)
+        Ctrl->>LLM: Send prompt + tool schemas (JSON mode)
+        LLM-->>Ctrl: Structured decision JSON
         
         alt Tool Call Requested
-            Ctrl->>Reg: Validate tool name & arguments
-            Reg->>DB: Execute allowlisted query (e.g., get_job_candidates)
+            Ctrl->>Reg: Validate tool name and arguments
+            Reg->>DB: Execute allowlisted query
             DB-->>Reg: Return deterministic data
             Reg-->>Ctrl: Structured tool_result
             Ctrl->>DB: Log audit event (tool_used)
-            Ctrl->>LLM: Append tool_result context to messages
+            Ctrl->>LLM: Append tool_result to messages
         else Final Recommendation
-            Ctrl-->>Ctrl: Validate final JSON & proposal_id ownership
+            Ctrl-->>Ctrl: Validate final JSON and proposal_id
         end
     end
 
     alt Proposed Acceptance Present
-        Ctrl->>DB: Update run status='pending_approval', save proposed_action
-        Ctrl-->>UI: Return summary + Proposal Acceptance Recommendation Card
+        Ctrl->>DB: Save proposed_action and set pending_approval
+        Ctrl-->>UI: Return summary + Proposal Recommendation Card
         Client->>UI: Click "Approve & Accept Proposal"
-        UI->>Ctrl: POST /api/agent/runs/<run_id>/approve
-        Ctrl->>DB: Claim run (status='approving') FOR UPDATE
-        Ctrl->>DB: Execute accept_pending_proposal(proposal_id, client_id)
-        Ctrl->>DB: Update run status='approved'
+        UI->>Ctrl: POST /api/agent/runs/run_id/approve
+        Ctrl->>DB: Claim run FOR UPDATE
+        Ctrl->>DB: Execute accept_pending_proposal
+        Ctrl->>DB: Update run status to approved
         Ctrl-->>UI: Return success & updated job state
     else Recommendation Only
-        Ctrl->>DB: Update run status='completed'
+        Ctrl->>DB: Update run status to completed
         Ctrl-->>UI: Return summary response
     end
 ```
@@ -300,24 +300,24 @@ EscrowIQ uses **PostgreSQL** with 11 relational tables managed via SQLAlchemy Co
 erDiagram
     users ||--o{ jobs : "posts"
     users ||--o{ proposals : "submits"
-    users ||--o{ escrow : "funds/receives"
+    users ||--o{ escrow : "funds or receives"
     users ||--o{ work_submissions : "delivers"
-    users ||--o{ complaints : "opens/involved"
+    users ||--o{ complaints : "involved in"
     users ||--o{ notifications : "receives"
     users ||--o{ email_codes : "requests"
-    users ||--o{ messages : "sends/receives"
+    users ||--o{ messages : "sends or receives"
     users ||--o{ agent_runs : "executes"
     
     jobs ||--o{ proposals : "receives"
     jobs ||--o{ escrow : "secures"
     jobs ||--o{ work_submissions : "contains"
-    jobs ||--o{ complaints : "disputed_in"
-    jobs ||--o{ messages : "context_for"
+    jobs ||--o{ complaints : "disputed in"
+    jobs ||--o{ messages : "context for"
     
-    escrow ||--o{ work_submissions : "linked_to"
-    escrow ||--o{ complaints : "disputed_in"
+    escrow ||--o{ work_submissions : "linked to"
+    escrow ||--o{ complaints : "disputed in"
     
-    work_submissions ||--o{ complaints : "complained_about"
+    work_submissions ||--o{ complaints : "complained about"
     agent_runs ||--o{ agent_audit_events : "generates"
 ```
 
